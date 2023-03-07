@@ -1,0 +1,230 @@
+---
+pdf_document:
+  latex_engine: xelatex
+author: 'Bodireddy Vikas Reddy netID: hg8118'
+date: "2023-02-12"
+output:
+  pdf_document:
+  latex_engine: xelatex
+title: "Bodireddy Vikas Reddy hg8118"
+---
+
+**Excercise:1**
+
+A: What are the assumptions for the simple linear regression model? Describe at least two diagnostics that are commonly used to check these assumptions.
+
+Answer : There are 4 assumptions associated with simple linear regression. they are
+
+1.  **Linearity:** The relationship between the the explanatory variable and the mean of response variable is always Linear
+
+2.  **Homoscedacity:** The variance of residual is the same for any value of X( i.e the variance is always same for all the errors).
+
+3.  **Independence:** The residuals are always Independent of each other.
+
+4.  **Normality:** The residuals are always normally Distributed.(They are always independent and identically distributed.
+
+**Diagnostics used in Simple linear regression:**
+
+1.  **Residual versus Fitted plots:** A plot created using Residuals on Y axis and the fitted values on x axis that provides homoscedacity assumption and helps to check linearity.
+
+2.  **QQplots:** This plot assess the relation between sample quantiles and theoretical quantiles and help us assess if the data in the set come from theoretical distribution such as normal or exponential distribution.
+
+3.  **Scatter Plots:** A scatter plot is used in SLM to find the relation ship between the explanatory variable(X) and the response variable (Y) . It also explains How much one variable is effected by another.
+
+**(B) What does it mean for a point to be an outlier? For simple linear regression, what rule is commonly used to classify points as outliers?**
+
+**Solution:** An outlier is an observations of points that tend to move far away from the array(cloud points). They always show strong influence on the least squares line. In most of the cases when a point has standardized residual (The difference between the observed value and the predicted value divided by the standard deviation of the residuals) greater than 2 or less than -2 is considered an outlier. When large data sets are considered the values move from intervals of (4,-4).
+
+**(C) What does it mean for a point to have high leverage? For simple linear regression, what rule is commonly used to classify points of high leverage?**
+
+**Solution:** leverage points refers to the extent to which an observation influences the fit of a linear regression model such that A point with high leverage has unusual predictor variable(X) , and can have a huge variation impact on the estimated regression line(tending to move the line towards it) and Any point whoose leverage value \>2 times the average leverage is considered to have high leverage.
+
+common rule classifying a High leverage point is :
+
+$$h_i >2*average(h_i) = 4/n$$
+
+**(D)For simple linear regression, what are the formulas for the error** $\epsilon_i$ **, residual** $\hat{e_i}$ **, and standardized residual** $r_i$**? What is Var(**$\epsilon_i$**) and Var(**$\hat{e_i}$**) (just write down the formulas, no derivation necessary)? Describe two reasons why it is useful to look at a plot of the standardized residuals versus the fitted values.**
+
+**Solution:** The formula for
+
+1.error **(**$\epsilon_i$**)**is
+
+$$\epsilon_i = Y_i - (\hat{Y_i})$$
+
+2.Residual $$\hat{e_i} = Y_i - (\hat{\beta_0}+\hat{\beta_1}x_i)$$
+
+3\. Standard Residual :
+
+$$r_i= \hat{\epsilon_i}/\hat{\sigma}\sqrt{1-h_i}$$
+
+residual standard error is given by $$\hat{\sigma} = \sqrt1/(n-1) * \sum_{i = 1}^{n} \hat{e_i}^2$$
+
+$$Var(\hat{\epsilon_i}) = \sigma^2$$
+
+$$Var(\hat{e_i}) = \sigma^2 *(1- h_1)$$
+
+Various reasons to look at the plot of standardized residuals versus the fitted values.
+
+1.  This plots help us to find the non linearity, outliers and unequal variances.
+
+2.  They help us to find bad leverage points which tend to effect the linearity of model.
+
+**Excercise 2:**
+
+**(a) A plot of the residuals versus fitted values is especially useful for checking the assumptions linearity and constant variance.**
+
+**Answer:** True
+
+**(b) The log transformation is most commonly used to stabilize the variance for count data.**
+
+**Answer:** False
+
+Explanation: square root transformation transformation of data ia also another commonly used transformation to stabilize the variance of count data. But Square root transformation is not effective as compared to log transformation as it does not compress the range of large count values as much as log transformation.
+
+**(c) When considering transformations for a simple linear regression model, it is always necessary to transform both the predictor and response variable.**
+
+**Answer:** False
+
+Explanation: If the primary goal of transformation is to improve the linear relation shipbetween explanatory and response variable then transforming only the response variable(Y) is enough) and in case of heteroscedasticity Predictor(X) is transformed and keeping Response(Y) unchanged.
+
+And in some cases to address problems associated with Linear regression model, we may need to transform both predictor(X) and Response(Y) variables. But Transforming a predictor, response or both the values depends on the type of data and the problems associated with it.
+
+**(d) When fitting a simple linear regression model, the most important piece of information is the R2(coefficient of determination). An R2close to 1 always indicates that a straight line is a good fit to the data.**
+
+**Answer:** False
+
+Explanation: While $R^2$ is most important factor while fitting a simple linear regression, and is used to find overall fir of model. It is not most important piece of information. An R-squared value close to 1 indicates that the model explains all of the variability in the response variable(Y) and is a good fit, but could be a straight line, polynomial or can also be linear.
+
+**(e) Transformations are useful for linearizing the relationships between the explanatory (X) and response (Y ) variables, and for overcoming problems due to nonconstant variance.**
+
+**Answer:** True
+
+```{r,results='asis', echo=FALSE}
+cat("\\newpage")
+
+
+```
+
+**Excercise : 3**
+
+```{r}
+library(ggplot2)
+nat_stat <- read.csv("C:\\Users\\STSC\\Desktop\\stat 632\\UN11.csv")
+```
+
+```{r}
+head(nat_stat)
+
+```
+
+**A:Make a scatterplot with fertility on the y-axis and ppgdp on the x-axis. Explain why we should consider log transformations for this data.**
+
+```{r}
+ggplot(nat_stat, aes(ppgdp,fertility))+
+  geom_point(col ="blue",size = 2)+
+  theme(panel.background =element_rect(fill = "lightgreen", colour = "black"))
+```
+
+```{r}
+#plot(fertility~ppgdp,data = nat_stat, pch = 16, col = "blue", bg = "grey", lwd = 3)
+
+```
+
+**Answer:** As we observe the scatter plot for explanatory and response variable does not seem to be linear and are right skewed.which suggests we should use logarithmic transformation while checking the linearity of the variables. and using a log transformation make's the relationship more linear.
+
+**B: Make a scatterplot of log(fertility) versus log(ppgdp) and add the least squares regression line. Does the association appear to be reasonably linear?**
+
+```{r}
+Log_lm1 <- lm(log(fertility) ~ log(ppgdp),data=nat_stat)
+
+plot_log <- ggplot(nat_stat,aes(log(ppgdp),log(fertility)))+
+  geom_point(col = "blue",size = 2)+
+  geom_smooth(method = "lm",se = FALSE, linewidth = 1.1, colour = "red")+
+  theme(panel.background = element_rect(fill = 'grey',colour = "purple"))
+plot_log
+```
+
+```{r, echo=FALSE}
+# plot(log(fertility)~log(ppgdp),data = nat_stat,
+#     pch = 19,
+#     col = 'Red')
+#abline(Log_lm1, lwd = 2, col = 'orange')
+
+```
+
+**Answer:** Yes after using the log() function for both the variables, the graph seems to be **linear( Inverse-linear)**. which means with increase in ppgdp values there will be decrease in fertility rate.
+
+**C: Use the lm() function to fit a simple linear regression model with log(fertility) as the response variable, and log(ppgdp) as the explanatory variable. Use the summary() function to print the results.**
+
+**Answer:**
+
+```{r}
+Log_lm1 <- lm(log(fertility) ~ log(ppgdp),data=nat_stat)
+
+summary(Log_lm1)
+```
+
+**(D) Write down the equation for the least squares line.**
+
+**Answer:** The equation for least square regression line after using log function is given by
+
+$$\log(\hat{fert}) = 2.665 + (-0.2071)*log(pggdp)$$ .
+
+here $\hat{fert}$ is refereed to fertility rate.
+
+**(e) Interpret the slope of the regression model.**
+
+**Answer:**From above equation of regression line its clear that with increase in every unit of **log(ppgdp)** there will be decrease in **log(fertility)** value by 0.2071.(I.e slope of the line is -0.2071).
+
+**(F) For a locality not in the data with ppgdp = 1000, obtain a point prediction and a 95% prediction interval for log(fertility). If the interval (a, b) is a 95% prediction interval for log(fertility), then a 95% prediction interval for fertility is given by (exp(a), exp(b)). Use this results to get a 95% prediction interval for fertility.**
+
+```{r}
+explain <- data.frame(ppgdp = 1000)
+predict_pggdp <- predict.lm(Log_lm1, explain, interval =
+                           "prediction", level = 0.95)
+print("Predicted values")
+predict_pggdp
+
+```
+
+```{r}
+print("Transformed predicted values")
+exp(predict_pggdp)
+```
+
+**Solution:**As we have taken the transformed variables into account for the prediction, we need to apply transformation for the prediction interval in order to get the 95% Prediction interval for The untransformed variables.
+
+**G: Make a plot of the standardized residuals versus fitted values, and a QQ plot of the standardized residuals. Comment on whether or not the assumptions for simple linear regression appear to be satisfied.**
+
+**Answer:** yes all the assumptions of Simple linear regression i.e (Linearity, independence, normality and constant variance) all these are satisfied.
+
+```{r}
+ggplot(nat_stat, aes(fitted(Log_lm1),rstandard(Log_lm1)))+
+  geom_point(colour = 'blue')+
+  geom_hline(yintercept = 0,lty = 2, lwd = 1)+
+ 
+
+```
+
+**QQ-Plot for standard residuals**
+
+```{r}
+qqnorm(rstandard(Log_lm1))
+
+qqline(rstandard(Log_lm1),col='Blue', lwd = 2)
+```
+
+**H: Which countries are flagged as outliers? That is, which countries have standardized residuals outside the interval from -2 to 2. In your view, does it seem necessary to remove any of these points, and then refit the model?**
+
+**Answer:**
+
+```{r, warning=FALSE}
+# Finding the Countries which have outliers
+nat_stat[which(abs(rstandard(Log_lm1))>2),]
+plot(hatvalues(Log_lm1), rstandard(Log_lm1),
+     xlab = 'leverage points' , 
+     ylab = 'rstandard(standard residuals)',pch = 16,col = 'red')
+abline(h = c(-2,2), lty= 2, lwd = 2, col= 'blue')
+```
+
+There are seven countries which have outliers , In my view its not necessary to remove these points as they are not effecting the values to such an extent and also these are not any bad leverage points there is no need to remove these points.

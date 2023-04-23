@@ -1,0 +1,30 @@
+---
+title: "Untitled"
+author: "hg8118"
+date: "2023-04-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+library(ggExtra)
+library(ggplot2)
+library(car)
+library(carData)
+library(emmeans)
+pacman::p_load(ROCR, pROC)
+library(faraway)
+library(MASS)
+```
+
+```{r}
+setwd("C:\\Users\\STSC\\Desktop\\stat 632\\Stat 632 Project")
+```
+
+#### Importing Dataset:
+
+```{r}
+diabetes <- read.csv("diabetes.csv")
+head(diabetes)
+```

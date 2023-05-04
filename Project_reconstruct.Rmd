@@ -22,6 +22,7 @@ library(rpart.plot)
 library(caret)
 library(psych)
 library(vip)
+library(randomForest)
 ```
 
 #importing the data from workspace
@@ -92,9 +93,15 @@ diabetes$Outcome <- as.factor(diabetes$Outcome)
 # Create a new column to hold the factor values
 #0-1(0-18 years teen age and below), 19-40(Young Age), 41-60(middle age), 60-85(Old #Age)
 diabetes$Age <- cut(diabetes$Age, 
-                          breaks=c(0,18, 40, 60, 85), 
-                          labels=c("0","1","2","3"), 
+                          breaks=c(21, 40, 60, 85), 
+                          labels=c("0","1","2"), 
                           include.lowest=TRUE)
+
+# diabetes$B <- cut(diabetes$BMI, 
+#                           breaks=c(0,18.5, 25, 30, 50), 
+#                           labels=c("Underweight","Normal Weight",
+#                                    "Over Weight","Obesity"), 
+#                           include.lowest=TRUE)
 
 head(diabetes)
 ```
@@ -112,8 +119,12 @@ From above we have removed the Age from the dataset and created new dataset with
 
 ```{r}
 fit_2 <- glm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + 
-    DiabetesPedigreeFunction + Age, data = diabetes, family = "binomial")
+    DiabetesPedigreeFunction + Age + Insulin:DiabetesPedigreeFunction, data = diabetes, family = "binomial")
 summary(fit_2)
+```
+
+```{r}
+plot(diabetes$Insulin,diabetes$DiabetesPedigreeFunction)
 ```
 
 ```{r}
@@ -192,4 +203,131 @@ We use **VIP** function to create a graph showing the importance of all variable
 ```{r}
 vip(model_1, num_features = 8)
 
+```
+
+creating a random forest model
+
+```{r}
+# Train a random forest model
+rfModel <- randomForest(Outcome ~ ., data = train_data, ntree = 500, mtry = 3, importance = TRUE)
+
+# Predict the outcome of the test data using the trained model
+rfPred <- predict(rfModel, test_data)
+confusionMatrix(rfPred, test_data$Outcome)
+```
+
+```{r, warning=FALSE}
+# Train a random forest model
+rfModel <- randomForest(Outcome ~ Pregnancies + Glucose + BloodPressure+
+                       BMI + DiabetesPedigreeFunction + Age+Pregnancies:Age, data = train_data, ntree = 500, mtry = 3, importance = TRUE)
+
+# Predict the outcome of the test data using the trained model
+rfPred <- predict(rfModel, test_data)
+confusionMatrix(rfPred, test_data$Outcome)
+```
+
+```{r}
+library(xgboost)
+
+# Load the dataset
+diabetes <- read.csv("diabetes.csv")
+
+# Split the dataset into training and testing sets
+set.seed(123)
+train_indices <- sample(1:nrow(diabetes), 0.7*nrow(diabetes))
+train_data <- diabetes[train_indices,]
+test_data <- diabetes[-train_indices,]
+
+# Define the input and output variables
+x_train <- data.matrix(train_data[,1:8])
+y_train <- train_data[,9]
+x_test <- data.matrix(test_data[,1:8])
+y_test <- test_data[,9]
+
+# Train the XGBoost model
+xgb_model <- xgboost(data = x_train, label = y_train, objective = "binary:logistic", nrounds = 1000, early_stopping_rounds = 10, verbose = 0)
+
+# Make predictions on the test set
+y_pred <- predict(xgb_model, x_test)
+y_pred <- ifelse(y_pred > 0.5, 1, 0)
+
+# Calculate the accuracy
+accuracy <- sum(y_pred == y_test)/length(y_test)
+print(paste("Accuracy:", accuracy))
+
+```
+
+```{r}
+diab_new <- diabetes[,-4]
+cor_data <- diab_new[,1:7]
+corPlot(cor_data, cex = 1.2)
+```
+
+```{r}
+model_interact <- glm(Outcome ~ Pregnancies
+                      + Glucose + BMI+BloodPressure + DiabetesPedigreeFunction
+                      +Age + Pregnancies:Age
+                      , data = diabetes, 
+                      family = "binomial")
+summary(model_interact)
+```
+
+```{r}
+set.seed(123)
+
+# Create train-test split with 70-30 ratio
+train_index <- createDataPartition(diab_new$Outcome, p = 0.7, list = FALSE)
+train_data <- diab_new[train_index, ]
+test_data <- diab_new[-train_index, ]
+
+# Fit logistic regression model on training data
+T_T_S_model <- glm(Outcome ~ Glucose + BloodPressure+
+                       BMI + DiabetesPedigreeFunction + Pregnancies:Age, 
+                     data = train_data, family = binomial)
+# Predict on training data 
+predictions <- predict(T_T_S_model, newdata = train_data, type = "response")
+predicted_classes_train <- ifelse(predictions > 0.5, 1, 0)
+
+# Predict on test data
+predictions <- predict(T_T_S_model, newdata = test_data, type = "response")
+predicted_classes_test <- ifelse(predictions > 0.5, 1, 0)
+
+# Create confusion matrix for bot training data and testing data 
+confusion_matrix_train <- table(train_data$Outcome, predicted_classes_train)
+confusion_matrix<- table(test_data$Outcome, predicted_classes_test)
+confusion_matrix_train
+confusion_matrix
+# accuracy
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+accuracy
+```
+
+```{r}
+predictions <- predict(T_T_S_model, newdata = test_data, type = "response")
+roc_obj <- roc(test_data$Outcome, predictions)
+plot(roc_obj, print.auc = TRUE, main = "ROC Curve for Diabetes Prediction", 
+     col = "blue", diag.col = "yellow")
+
+```
+
+```{r}
+ggplot(diabetes)+
+  geom_boxplot(aes(x=Age ,y = Pregnancies , fill = Outcome))+
+  labs(x="Age",
+       y="Pregnancies",
+       title = "Correlation Graph")
+```
+
+```{r}
+ggplot(diabetes, aes(x =Insulin , y = Glucose, color = Outcome))+
+  geom_point()
+  
+ggplot(diabetes, aes(x =BMI , y = BloodPressure, color = Outcome))+
+  geom_point()
+```
+
+```{r}
+library(dplyr)
+diabetes<-diabetes %>% 
+  mutate(Outcome = factor(Outcome,labels = c("Negative","Positive")))
 ```

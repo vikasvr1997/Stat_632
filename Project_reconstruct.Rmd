@@ -35,7 +35,7 @@ setwd("C:\\Users\\STSC\\Desktop\\stat 632\\Stat 632 Project")
 ```{r}
 diabetes <- read.csv("diabetes.csv")
 head(diabetes)
-
+summary(diabetes)
 ```
 
 
@@ -45,10 +45,10 @@ pairs(Outcome ~., data = diabetes)
 cor_data <- diabetes[,1:8]
 corPlot(cor_data, cex = 1.2)
 
-library(corrplot)
-corrplot(cor(cor_data), method = "number",
-         title = "method = 'number'",
-         tl.pos = "n", mar = c(2, 1, 3, 1))
+# library(corrplot)
+# corrplot(cor(cor_data), method = "number",
+#          title = "method = 'number'",
+#          tl.pos = "n", mar = c(2, 1, 3, 1))
 ```
 ```{r}
 diabetes$Outcome <- ifelse(diabetes$Outcome == 1, "Positive", "Negative")
@@ -66,7 +66,7 @@ diabetes$Outcome <- as.factor(diabetes$Outcome)
 #0-1(0-18 years teen age and below), 19-40(Young Age), 41-60(middle age), 60-85(Old #Age)
 diabetes$Age <- cut(diabetes$Age, 
                           breaks=c(21, 40, 60, 85), 
-                          labels=c("young Age","Middle Age","Old Age"), 
+                          labels=c("young Age","Middle Age","Elder & Wise"), 
                           include.lowest=TRUE)
 
 # diabetes$B <- cut(diabetes$BMI, 
@@ -75,10 +75,14 @@ diabetes$Age <- cut(diabetes$Age,
 #                                    "Over Weight","Obesity"), 
 #                           include.lowest=TRUE)
 
+# Performing AIC test and getting summary statistics to remove unwanted predictors
+
+summary(diabetes)
 head(diabetes)
 round(vif(model_1),2)
 model_2 <- step(model_1) 
 model_2
+
 
 
 fit_1 <- glm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + 
@@ -147,24 +151,20 @@ predictions <- predict(T_T_S_model, newdata = test_data, type = "response")
 roc_obj <- roc(test_data$Outcome, predictions)
 plot(roc_obj, print.auc = TRUE, main = "ROC Curve for Diabetes Prediction", 
      col = "blue", diag.col = "yellow")
-# Load necessary packages
+```
+
+
+```{r}
+#Load necessary packages
 library(pROC)
 
 # Predict probabilities on test data
 predictions <- predict(T_T_S_model, newdata = test_data, type = "response")
 
-# Create ROC curve object
+# Create ROC curve object to create a 
 roc_obj <- roc(test_data$Outcome, predictions)
 
-# Plot ROC curve
-plot(roc_obj, print.auc = TRUE, main = "ROC Curve for Diabetes Prediction")
-
 vip(T_T_S_model)
-
-
-diab_new <- diabetes[,-4]
-cor_data <- diab_new[,1:7]
-corPlot(cor_data, cex = 1.2)
 
 model_interact <- glm(Outcome ~ Pregnancies
                       + Glucose + BMI+BloodPressure + DiabetesPedigreeFunction
@@ -183,7 +183,7 @@ ggplot(diabetes)+
 ggplot(diabetes, aes(x =Insulin , y = Glucose, color = Outcome))+
   geom_point()
   
-ggplot(diabetes, aes(x =Pregnancies , y = BloodPressure, color = Outcome))+
+ggplot(diabetes, aes(x =BMI , y = BloodPressure, color = Outcome))+
   geom_point()
 ```
 
@@ -201,6 +201,8 @@ $$\hat{p}(X_1,X_2,X_3,X_4,X_5,X_6,X_7)
 =$$
 $$\frac{e^{( -8.00 + 0.155*Pregnancies + 0.034*Glucose -0.012*BloodPressure +0.084*BMI + 0.870*DiabetesPedigreeFunction + 1.057*Age1 + 1.6831*Age2 - 0.075*Pregnancies*Age1 - 0.548*Pregnancies*Age2)}}{1+e^{( -8.00 + 0.155*Pregnancies + 0.034*Glucose -0.012*BloodPressure +0.084*BMI + 0.870*DiabetesPedigreeFunction + 1.057*Age1 + 1.6831*Age2 - 0.075*Pregnancies*Age1 - 0.548*Pregnancies*Age2)}}$$
 ```{r}
+#  Creating a random forest model to test the parameters with full and reduced model
+
 set.seed(123)
 # Train a random forest model
 rfModel <- randomForest(Outcome ~ ., data = train_data, ntree = 500, mtry = 3, importance = TRUE)
@@ -208,7 +210,11 @@ rfModel <- randomForest(Outcome ~ ., data = train_data, ntree = 500, mtry = 3, i
 # Predict the outcome of the test data using the trained model
 rfPred <- predict(rfModel, test_data)
 confusionMatrix(rfPred, test_data$Outcome)
-set.seed(999)
+```
+
+
+```{r}
+set.seed(151)
 # Train a random forest model
 rfModel <- randomForest(Outcome ~ Pregnancies + Glucose + BloodPressure+
                        BMI + DiabetesPedigreeFunction + Age+Pregnancies:Age, data = train_data, ntree = 500, mtry = 3, importance = TRUE)

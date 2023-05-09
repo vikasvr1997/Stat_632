@@ -16,6 +16,7 @@ library(emmeans)
 pacman::p_load(ROCR, pROC)
 library(faraway)
 library(MASS)
+library(rpart.plot)
 ```
 
 ```{r}
@@ -27,4 +28,188 @@ setwd("C:\\Users\\STSC\\Desktop\\stat 632\\Stat 632 Project")
 ```{r}
 diabetes <- read.csv("diabetes.csv")
 head(diabetes)
+```
+
+```{r}
+pairs(Outcome ~., data = diabetes)
+```
+
+
+```{r}
+model_1 <- glm(Outcome ~ Pregnancies + Glucose + SkinThickness + Insulin +
+                 BloodPressure + DiabetesPedigreeFunction + Age,
+               data = diabetes, family = binomial)
+summary(model_1)
+vif(model_1)
+```
+
+```{r}
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+# Create a new column to hold the factor values
+diabetes$Age_group <- cut(diabetes$Age, 
+                          breaks=c(20, 35, 60, 85), 
+                          labels=c("Young_age", "Middle_age", "Old_age"), 
+                          include.lowest=TRUE)
+
+# diabetes$Insulin <- cut(diabetes$Insulin,
+#                           breaks=c(0, 20, 50,200),
+#                           labels=c("Normal", "High", "Very High"),
+#                           include.lowest=TRUE)
+head(diabetes)
+```
+
+```{r}
+model_2 <- glm(Outcome ~ Pregnancies + Glucose + SkinThickness + Insulin +
+                 BloodPressure + DiabetesPedigreeFunction + Age,
+               data = diabetes, family = binomial)
+summary(model_2)
+model_step <- step(model_2)
+AIC(model_2,model_step)
+
+```
+```{r}
+fit_1 <- glm(Outcome ~ Pregnancies + Glucose + SkinThickness + Insulin + BloodPressure + 
+    DiabetesPedigreeFunction, data = diabetes, family = "binomial")
+vif(fit_1)
+```
+
+
+```{r}
+log_diab <- glm(Outcome ~ Pregnancies + Glucose + BloodPressure+ BMI + DiabetesPedigreeFunction + Age,
+                data = diabetes, family = binomial)
+summary(log_diab)
+```
+
+```{r}
+v_glm_se <- step(log_diab)
+summary(v_glm_se)
+AIC(log_diab, v_glm_se)
+```
+
+```{r}
+pairs(Outcome ~ Pregnancies + Glucose + BloodPressure+ BMI + DiabetesPedigreeFunction + Age  ,
+                data = diabetes)
+
+```
+
+```{r}
+pairs(Outcome ~ Pregnancies + Glucose + BloodPressure+ BMI + DiabetesPedigreeFunction + Age_group,
+                data = diabetes)
+```
+
+```{r}
+glm_train <- glm( Outcome ~ Pregnancies + Glucose + BloodPressure+ BMI + DiabetesPedigreeFunction + Age_group , data= diabetes,
+                 family = binomial)
+summary(glm_train)
+```
+
+```{r}
+set.seed(999)
+# selecting no of rows from data
+n <- nrow(diabetes)
+n
+# rhere Floor is used to round of value to the nearest integer to get perfect split of data
+floor(0.7*n)
+```
+
+```{r}
+train <- sample(1:n,537)
+
+# fit model using training data and use subset function = train
+glm_train <- glm( Outcome ~ Pregnancies + Glucose + BloodPressure+ BMI + DiabetesPedigreeFunction + Age_group , data= diabetes,
+                 subset = train, family = binomial)
+summary(glm_train)
+```
+
+```{r}
+diabetes_test <- diabetes[-train,]
+
+probs_test <- predict(glm_train, newdata = diabetes_test,
+                      type = "response")
+head(probs_test)
+```
+
+```{r}
+# Load the required package
+library(rpart)
+
+# Fit a decision tree model
+tree_model <- rpart(Outcome ~ Pregnancies + Glucose + BloodPressure + Insulin + BMI + DiabetesPedigreeFunction + Age_group,
+                    data = diabetes,
+                    method = "class")
+rpart.plot(tree_model, extra = 100, varlen = 1)
+# Print the tree
+print(tree_model)
+
+# Plot the tree
+plot(tree_model, uniform = TRUE,
+     main = "Decision Tree for Diabetes",
+     margin = 0.1)
+text(tree_model, use.n = TRUE, all = TRUE, cex = 0.8)
+
+```
+
+```{r}
+# Load necessary packages
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create train-test split with 70-30 ratio
+train_index <- createDataPartition(diabetes$Outcome, p = 0.7, list = FALSE)
+train_data <- diabetes[train_index, ]
+test_data <- diabetes[-train_index, ]
+
+# Fit logistic regression model on training data
+log_reg_model <- glm(Outcome ~ Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction + Age_group, data = train_data, family = binomial)
+
+# Predict on test data
+predictions <- predict(log_reg_model, newdata = test_data, type = "response")
+predicted_classes <- ifelse(predictions > 0.5, 1, 0)
+
+# Create confusion matrix
+confusion_matrix <- table(test_data$Outcome, predicted_classes)
+confusion_matrix
+
+```
+
+```{r}
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+accuracy
+
+```
+
+```{r}
+# Calculate true positives, true negatives, false positives, false negatives
+tp <- confusion_matrix[2, 2]
+tn <- confusion_matrix[1, 1]
+fp <- confusion_matrix[1, 2]
+fn <- confusion_matrix[2, 1]
+
+# Calculate sensitivity and specificity
+sensitivity <- tp / (tp + fn)
+specificity <- tn / (tn + fp)
+
+# Print results
+cat("Sensitivity:", sensitivity, "\n")
+cat("Specificity:", specificity, "\n")
+
+```
+
+```{r}
+# Load necessary packages
+library(pROC)
+
+# Predict probabilities on test data
+predictions <- predict(log_reg_model, newdata = test_data, type = "response")
+
+# Create ROC curve object
+roc_obj <- roc(test_data$Outcome, predictions)
+
+# Plot ROC curve
+plot(roc_obj, print.auc = TRUE, main = "ROC Curve for Diabetes Prediction")
+
+# using 0.5 threshold
+#abline(0, 1, lty=2)
 ```
